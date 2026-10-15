@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Secrets (WAJIB): berisi API key Groq
+.env
+.env.local
+.env*.local
+
+# Build output Next.js
+frontend/.next/
+frontend/out/
+
+# Log
+*.log
+npm-debug.log*
+
+# File sistem dan editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
