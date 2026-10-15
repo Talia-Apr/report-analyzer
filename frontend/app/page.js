@@ -1,13 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-const SAMPLE = {
-  id: "Produksi hari ini mencapai 350 unit. Terdapat 12 produk reject. Mesin A mengalami downtime selama 45 menit karena masalah pada komponen mesin.",
-  en: "Production today reached 350 units. There were 12 rejected products. Machine A experienced 45 minutes of downtime due to a machine component issue.",
-};
+const SAMPLES = [
+  {
+    title: { id: "Laporan sederhana", en: "Simple report" },
+    text: {
+      id: "Produksi hari ini mencapai 350 unit. Terdapat 12 produk reject. Mesin A mengalami downtime selama 45 menit karena masalah pada komponen mesin.",
+      en: "Production today reached 350 units. There were 12 rejected products. Machine A experienced 45 minutes of downtime due to a machine component issue.",
+    },
+  },
+  {
+    title: { id: "Beberapa mesin bermasalah", en: "Multiple machine issues" },
+    text: {
+      id: "Laporan shift pagi: total produksi 1200 unit, reject 36 unit. Mesin A berhenti 20 menit untuk penggantian oli. Mesin C berhenti 55 menit karena belt putus. Operator melaporkan suhu ruang produksi cukup tinggi sejak pukul 10.00.",
+      en: "Morning shift report: total production 1200 units, 36 rejects. Machine A stopped for 20 minutes for an oil change. Machine C stopped for 55 minutes due to a broken belt. Operators reported high temperature in the production area since 10:00.",
+    },
+  },
+  {
+    title: { id: "Tanpa kendala", en: "No issues" },
+    text: {
+      id: "Produksi hari ini 800 unit dengan 8 produk reject. Seluruh mesin berjalan normal tanpa downtime. Pengiriman ke gudang selesai tepat waktu.",
+      en: "Production today was 800 units with 8 rejects. All machines ran normally with no downtime. Warehouse delivery was completed on time.",
+    },
+  },
+  {
+    title: { id: "Dua lini produksi", en: "Two production lines" },
+    text: {
+      id: "Lini 1 memproduksi 450 unit dengan 9 reject dan downtime 10 menit. Lini 2 memproduksi 380 unit dengan 19 reject. Lini 2 berhenti selama 1 jam 15 menit karena bahan baku terlambat datang dari gudang.",
+      en: "Line 1 produced 450 units with 9 rejects and 10 minutes of downtime. Line 2 produced 380 units with 19 rejects. Line 2 stopped for 1 hour 15 minutes because raw materials arrived late from the warehouse.",
+    },
+  },
+  {
+    title: { id: "Tanpa angka produksi", en: "No production numbers" },
+    text: {
+      id: "Hari ini tim maintenance melakukan pembersihan rutin pada mesin pengemasan dan memeriksa kalibrasi timbangan. Ada keluhan operator soal lampu penerangan area packing yang redup. Briefing keselamatan kerja dilakukan pukul 07.30.",
+      en: "Today the maintenance team did routine cleaning on the packaging machine and checked the scale calibration. Operators complained about dim lighting in the packing area. A safety briefing was held at 07:30.",
+    },
+  },
+];
 
 const LABELS = {
   id: {
@@ -55,6 +88,23 @@ export default function Page() {
 
   const L = LABELS[resultLang];
   const [status, setStatus] = useState({ state: "checking" });
+  const [samplesOpen, setSamplesOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    function onDown(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setSamplesOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === "Escape") setSamplesOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -169,9 +219,38 @@ export default function Page() {
                 </button>
               ))}
             </div>
-            <button onClick={() => setReport(SAMPLE[lang])} className={`${btn} text-steel hover:bg-steel/10`}>
-              Isi contoh
-            </button>
+            <div ref={menuRef} className="relative">
+              <button
+                onClick={() => setSamplesOpen((o) => !o)}
+                aria-haspopup="menu"
+                aria-expanded={samplesOpen}
+                className={`${btn} text-steel hover:bg-steel/10`}
+              >
+                Isi contoh ▾
+              </button>
+              {samplesOpen && (
+                <ul
+                  role="menu"
+                  className="absolute left-0 top-full z-10 mt-1 w-72 overflow-hidden rounded-md border border-rule bg-sheet shadow-lg"
+                >
+                  {SAMPLES.map((s, i) => (
+                    <li key={i} role="none">
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setReport(s.text[lang]);
+                          setSamplesOpen(false);
+                        }}
+                        className="block w-full px-4 py-2.5 text-left text-sm hover:bg-floor"
+                      >
+                        <span className="font-medium">{s.title[lang]}</span>
+                        <span className="mt-0.5 block truncate text-xs text-mute">{s.text[lang]}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <button
               onClick={analyze}
               disabled={loading || report.trim().length < 10}
@@ -209,7 +288,7 @@ export default function Page() {
                     <dt className="text-xs text-mute">{label}</dt>
                     <dd className="mt-1 font-mono text-2xl">
                       {value}
-                      {value !== "–" && <span className="ml-1 font-sans text-xs text-mute">{unit}</span>}
+                      {value !== "-" && <span className="ml-1 font-sans text-xs text-mute">{unit}</span>}
                     </dd>
                   </div>
                 ))}
