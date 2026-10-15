@@ -1,7 +1,7 @@
 # Dependencies
 node_modules/
 
-# Secrets (WAJIB): berisi API key Groq
+# Secrets
 .env
 .env.local
 .env*.local
