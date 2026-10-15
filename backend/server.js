@@ -34,7 +34,34 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+app.get("/api/health", async (_req, res) => {
+  if (!process.env.GROQ_API_KEY) {
+    return res.json({ online: false, model: MODEL, reason: "API key belum diatur" });
+  }
+  const t0 = Date.now();
+  try {
+    const r = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: { Authorization: `Bearer ${process.env.GROQ_API_KEY}` },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) {
+      return res.json({
+        online: false,
+        model: MODEL,
+        reason: r.status === 401 ? "API key tidak valid" : `Groq merespons ${r.status}`,
+      });
+    }
+    const list = await r.json();
+    res.json({
+      online: true,
+      model: MODEL,
+      modelAvailable: Array.isArray(list.data) ? list.data.some((m) => m.id === MODEL) : true,
+      latencyMs: Date.now() - t0,
+    });
+  } catch {
+    res.json({ online: false, model: MODEL, reason: "Tidak dapat terhubung ke Groq" });
+  }
+});
 
 app.post("/api/analyze", async (req, res) => {
   const { report, language = "id" } = req.body || {};
@@ -50,6 +77,7 @@ app.post("/api/analyze", async (req, res) => {
   }
 
   try {
+    const t0 = Date.now();
     const groqRes = await fetch(GROQ_URL, {
       method: "POST",
       headers: {
@@ -89,6 +117,11 @@ app.post("/api/analyze", async (req, res) => {
     res.json({
       summary: String(parsed.summary || ""),
       key_issues: Array.isArray(parsed.key_issues) ? parsed.key_issues.map(String) : [],
+      meta: {
+        provider: "Groq",
+        model: data.model || MODEL, // nama model yang dikembalikan Groq sendiri
+        latency_ms: Date.now() - t0,
+      },
       metrics: {
         production_units: production,
         reject_units: reject,

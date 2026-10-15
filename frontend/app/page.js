@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -54,6 +54,34 @@ export default function Page() {
   const [copied, setCopied] = useState(false);
 
   const L = LABELS[resultLang];
+  const [status, setStatus] = useState({ state: "checking" });
+
+  useEffect(() => {
+    let alive = true;
+    async function check() {
+      try {
+        const res = await fetch(`${API}/api/health`);
+        const d = await res.json();
+        if (!alive) return;
+        setStatus({
+          ...d,
+          state: !d.online ? "offline" : d.modelAvailable === false ? "model-missing" : "online",
+        });
+      } catch {
+        if (alive) setStatus({ state: "offline", reason: "Backend tidak terjangkau", model: null });
+      }
+    }
+    check();
+    const id = setInterval(check, 30000); // cek ulang tiap 30 detik
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  const statusView = {
+    checking: { dot: "bg-mute", text: "Memeriksa koneksi Groq…" },
+    online: { dot: "bg-green-600", text: "Groq API online" },
+    "model-missing": { dot: "bg-amber", text: "Groq online, model tidak ditemukan" },
+    offline: { dot: "bg-red-600", text: status.reason || "Groq API offline" },
+  }[status.state];
 
   async function analyze() {
     setLoading(true);
@@ -90,12 +118,29 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10 md:py-14">
-      <header className="mb-8 max-w-2xl">
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+      <div className="max-w-2xl">
         <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Analisis laporan operasional</h1>
         <p className="mt-2 text-mute">
           Tempel laporan shift atau laporan harian. Hasilnya dirangkum menjadi masalah, angka penting, dan tindak lanjut.
         </p>
-      </header>
+      </div>
+      <div
+        role="status"
+        className="flex items-center gap-3 rounded-md border border-rule bg-sheet px-4 py-3 text-sm"
+      >
+        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${statusView.dot}`} aria-hidden="true" />
+        <div>
+          <p className="font-medium">{statusView.text}</p>
+          {status.model && (
+            <p className="font-mono text-xs text-mute">
+              {status.model}
+              {status.latencyMs ? ` · ${status.latencyMs} ms` : ""}
+            </p>
+          )}
+        </div>
+      </div>
+    </header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         {/* 1. Input laporan */}
@@ -194,7 +239,15 @@ export default function Page() {
               </div>
 
               {/* 4. Salin / ekspor */}
+                {result.meta && (
+                  <p className="ml-5 mb-2 self-center text-xs text-mute">
+                    Dianalisis oleh {result.meta.provider} · <span className="font-mono">{result.meta.model}</span> ·{" "}
+                    {(result.meta.latency_ms / 1000).toFixed(1)} dtk
+                  </p>
+                )}
+
               <div className="flex flex-wrap gap-2 border-t border-rule px-5 py-3">
+              
                 <button onClick={copy} className={`${btn} border border-rule hover:bg-floor`}>
                   {copied ? "Tersalin" : "Salin hasil"}
                 </button>
