@@ -6,9 +6,12 @@ node_modules/
 .env.local
 .env*.local
 
-# Build output Next.js
+# Build Next.js
 frontend/.next/
 frontend/out/
+backend/dist/
+next-env.d.ts
+*.tsbuildinfo
 
 # Log
 *.log
