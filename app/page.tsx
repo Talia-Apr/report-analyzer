@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { AnalysisResult, HealthResponse, Lang, Status, Theme } from "./types";
-
-const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+import type { AnalysisResult, HealthResponse, Lang, Status, Theme } from "@/lib/types";
 
 /* ---------- Teks antarmuka (ID / EN) ---------- */
 const id = {
@@ -40,14 +38,14 @@ const id = {
   json: "Unduh .json",
   fileName: "analisis-laporan",
   analyzedBy: "Dianalisis oleh",
-  networkError: (api: string) => `Backend tidak terjangkau. Pastikan server berjalan di ${api}`,
+  networkError: () => "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.",
   genericError: "Terjadi kesalahan.",
   st: {
     checking: "Memeriksa koneksi Groq…",
     online: "Groq API online",
     modelMissing: "Groq online, model tidak ditemukan",
     offline: "Groq API offline",
-    backend: "Backend tidak terjangkau",
+    backend: "Server tidak terjangkau",
     noKey: "API key belum diatur",
     invalidKey: "API key tidak valid",
     groqStatus: (n?: number) => `Groq merespons ${n ?? ""}`.trim(),
@@ -91,14 +89,14 @@ const en: Strings = {
   json: "Download .json",
   fileName: "report-analysis",
   analyzedBy: "Analyzed by",
-  networkError: (api: string) => `Backend unreachable. Make sure the server is running at ${api}`,
+  networkError: () => "Cannot reach the server. Check your internet connection.",
   genericError: "Something went wrong.",
   st: {
     checking: "Checking Groq connection…",
     online: "Groq API online",
     modelMissing: "Groq online, model not found",
     offline: "Groq API offline",
-    backend: "Backend unreachable",
+    backend: "Server unreachable",
     noKey: "API key not set",
     invalidKey: "Invalid API key",
     groqStatus: (n?: number) => `Groq responded ${n ?? ""}`.trim(),
@@ -253,7 +251,7 @@ export default function Page() {
     let alive = true;
     async function check() {
       try {
-        const res = await fetch(`${API}/api/health`);
+        const res = await fetch("/api/health", { cache: "no-store" });
         const d = (await res.json()) as HealthResponse;
         if (!alive) return;
         setStatus({
@@ -307,13 +305,13 @@ export default function Page() {
     try {
       let res: Response;
       try {
-        res = await fetch(`${API}/api/analyze`, {
+        res = await fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ report: text, language }),
         });
       } catch {
-        throw new Error(T.networkError(API));
+        throw new Error(T.networkError());
       }
       const data = (await res.json().catch(() => ({}))) as Partial<AnalysisResult> & { error?: string };
       if (!res.ok) throw new Error(data.error || T.genericError);

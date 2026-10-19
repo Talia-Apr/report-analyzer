@@ -1,15 +1,15 @@
 # Dependencies
 node_modules/
 
-# Secrets
+# Rahasia (WAJIB): berisi API key Groq
 .env
 .env.local
 .env*.local
 
-# Build Next.js
-frontend/.next/
-frontend/out/
-backend/dist/
+# Build Next.js dan Vercel
+.next/
+out/
+.vercel/
 next-env.d.ts
 *.tsbuildinfo
 

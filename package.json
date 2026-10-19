@@ -1,5 +1,5 @@
 {
-  "name": "ops-report-frontend",
+  "name": "ops-report-analyzer",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -8,17 +8,20 @@
     "start": "next start"
   },
   "dependencies": {
-    "next": "^14.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@types/node": "^20.19.43",
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
+    "@types/node": "^20.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.40",
     "tailwindcss": "^3.4.7",
-    "typescript": "^5.9.3"
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }

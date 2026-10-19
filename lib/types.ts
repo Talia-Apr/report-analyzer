@@ -1,4 +1,5 @@
 export type Lang = "id" | "en";
+export type Theme = "light" | "dark";
 
 export interface AnalysisResult {
   summary: string;
@@ -31,5 +32,3 @@ export interface Status {
   reason?: string;
   httpStatus?: number;
 }
-
-export type Theme = "light" | "dark";
